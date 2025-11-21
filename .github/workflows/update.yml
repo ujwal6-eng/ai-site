@@ -2,7 +2,7 @@ name: Update AI Website
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 6 * * *"     # Roz subah 11:30 AM IST
   workflow_dispatch:
 
 jobs:
@@ -17,42 +17,48 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
-      - name: Generate AI content using OpenRouter
+      - name: Create JSON payload
         run: |
-          # JSON payload
           cat << 'EOF' > payload.json
           {
-            "model": "meta-llama/llama-3.1-8b-instruct",
+            "model": "google/gemini-2.0-flash-lite-preview",
             "messages": [
               {
                 "role": "user",
-                "content": "Give one short interesting AI fact for a website."
+                "content": "Give 1 short, interesting AI fact for my website."
               }
             ]
           }
           EOF
 
-          # API Request
+      - name: Call OpenRouter API
+        run: |
           response=$(curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.OPENROUTER_KEY }}" \
-            -d @payload.json)
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.OPENROUTER_KEY }}" \
+          -d @payload.json)
 
-          echo "Raw Response: $response"
+          echo "Raw API Response:"
+          echo "$response"
 
-          # Extract content safely
           content=$(echo "$response" | jq -r '.choices[0].message.content // empty')
 
           if [ -z "$content" ]; then
-            content="AI could not generate content today. (Check model / API key)"
+            content="AI could not generate content today. Check model/key."
           fi
 
-          echo "<html><body><h1>Daily AI Fact</h1><p>$content</p></body></html>" > index.html
+          echo "$content" > ai_fact.txt
+
+      - name: Update <p id="fact"> in index.html
+        run: |
+          fact=$(cat ai_fact.txt | sed 's/"/\\"/g')
+
+          sed -i "s|<p id=\"fact\">.*</p>|<p id=\"fact\">$fact</p>|" index.html
 
       - name: Commit and Push
         run: |
           git config user.name "ujwal6-eng"
           git config user.email "youremail@example.com"
           git add index.html
-          git commit -m "Daily AI update" || echo "No changes"
+          git commit -m "Daily AI Update" || echo "No changes"
           git push
