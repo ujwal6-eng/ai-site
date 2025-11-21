@@ -21,11 +21,11 @@ jobs:
         run: |
           cat << 'EOF' > payload.json
           {
-            "model": "meta-llama/Llama-3-8b-chat",
+            "model": "meta-llama/llama-3.1-8b-instruct",
             "messages": [
               {
                 "role": "user",
-                "content": "Write a fun, short AI fact for my daily website."
+                "content": "Write a short, interesting AI fact for my daily website."
               }
             ]
           }
@@ -48,5 +48,5 @@ jobs:
           git config user.name "ujwal6-eng"
           git config user.email "youremail@example.com"
           git add index.html
-          git commit -m "Daily AI update"
+          git commit -m "Daily AI update" || echo "No changes"
           git push
