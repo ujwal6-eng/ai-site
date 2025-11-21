@@ -1,0 +1,15 @@
+name: Test OpenRouter API
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test OpenRouter request
+        run: |
+          curl -s -X POST https://openrouter.ai/api/v1/chat/completions \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.OPENROUTER_KEY }}" \
+          -d '{"model": "meta-llama/Llama-3-8b-chat", "messages":[{"role":"user","content":"Hello?"}]}'
