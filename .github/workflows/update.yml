@@ -2,7 +2,7 @@ name: Update AI Website
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # Roz subah 11:30AM IST
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -19,15 +19,25 @@ jobs:
 
       - name: Generate AI content using OpenRouter
         run: |
+          cat << 'EOF' > payload.json
+          {
+            "model": "meta-llama/Llama-3-8b-chat",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Write a fun, short AI fact for my daily website."
+              }
+            ]
+          }
+          EOF
+
           response=$(curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.OPENROUTER_KEY }}" \
-          -d '{
-            "model": "meta-llama/Llama-3-8b-chat",
-            "messages": [
-              {"role":"user", "content":"Write a short, interesting AI fact for today's website update."}
-            ]
-          }')
+          -d @payload.json)
+
+          echo "Raw API response:"
+          echo "$response"
 
           content=$(echo "$response" | jq -r '.choices[0].message.content')
 
