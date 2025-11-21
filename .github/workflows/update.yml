@@ -19,27 +19,33 @@ jobs:
 
       - name: Generate AI content using OpenRouter
         run: |
+          # JSON payload
           cat << 'EOF' > payload.json
           {
             "model": "meta-llama/llama-3.1-8b-instruct",
             "messages": [
               {
                 "role": "user",
-                "content": "Write a short, interesting AI fact for my daily website."
+                "content": "Give one short interesting AI fact for a website."
               }
             ]
           }
           EOF
 
+          # API Request
           response=$(curl -s -X POST "https://openrouter.ai/api/v1/chat/completions" \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer ${{ secrets.OPENROUTER_KEY }}" \
-          -d @payload.json)
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.OPENROUTER_KEY }}" \
+            -d @payload.json)
 
-          echo "Raw API response:"
-          echo "$response"
+          echo "Raw Response: $response"
 
-          content=$(echo "$response" | jq -r '.choices[0].message.content')
+          # Extract content safely
+          content=$(echo "$response" | jq -r '.choices[0].message.content // empty')
+
+          if [ -z "$content" ]; then
+            content="AI could not generate content today. (Check model / API key)"
+          fi
 
           echo "<html><body><h1>Daily AI Fact</h1><p>$content</p></body></html>" > index.html
 
